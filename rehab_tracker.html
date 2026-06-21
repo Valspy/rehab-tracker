@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Реабилитация — трекер</title>
+<style>
+  :root {
+    --bg: #f7f6f3;
+    --surface: #ffffff;
+    --surface2: #f0ede8;
+    --border: #e2ddd7;
+    --border2: #ccc8c0;
+    --text: #1a1917;
+    --text2: #6b6760;
+    --text3: #9c9890;
+    --green: #3d8b4e;
+    --green-bg: #eaf4ec;
+    --green-light: #d1ebd8;
+    --amber: #b07a1a;
+    --amber-bg: #fdf3dc;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161614;
+      --surface: #1f1f1d;
+      --surface2: #2a2a27;
+      --border: #2e2e2b;
+      --border2: #3d3d39;
+      --text: #f0ede8;
+      --text2: #9c9890;
+      --text3: #6b6760;
+      --green: #5cb870;
+      --green-bg: #1a2e1e;
+      --green-light: #243829;
+      --amber: #e0a830;
+      --amber-bg: #2a2010;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; line-height: 1.5; min-height: 100vh; }
+  
+  .app { max-width: 520px; margin: 0 auto; padding: 24px 16px 60px; }
+  
+  /* Header */
+  .header { margin-bottom: 28px; }
+  .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .header h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
+  .header-sub { font-size: 13px; color: var(--text2); }
+  .badge-stage { font-size: 11px; background: var(--amber-bg); color: var(--amber); border-radius: 20px; padding: 3px 10px; font-weight: 500; }
+
+  /* Week nav */
+  .week-nav { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+  .week-btn { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); width: 32px; height: 32px; cursor: pointer; color: var(--text2); font-size: 16px; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+  .week-btn:hover { background: var(--surface2); }
+  .week-label { flex: 1; text-align: center; font-size: 13px; color: var(--text2); font-weight: 500; }
+
+  /* Day tabs */
+  .day-tabs { display: flex; gap: 5px; margin-bottom: 20px; }
+  .day-tab { flex: 1; padding: 7px 0; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); cursor: pointer; font-size: 12px; font-weight: 500; color: var(--text2); text-align: center; transition: all 0.15s; position: relative; }
+  .day-tab:hover { background: var(--surface2); }
+  .day-tab.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .day-tab .dot { display: block; width: 5px; height: 5px; border-radius: 50%; background: var(--green); margin: 3px auto 0; opacity: 0; }
+  .day-tab.has-done .dot { opacity: 1; }
+  .day-tab.active .dot { background: var(--bg); opacity: 0.5; }
+
+  /* Progress */
+  .progress-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .progress-bar-wrap { flex: 1; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.3s ease; }
+  .progress-text { font-size: 12px; color: var(--text2); white-space: nowrap; min-width: 48px; text-align: right; }
+
+  /* Blocks */
+  .blocks { display: flex; flex-direction: column; gap: 8px; }
+  .block { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .block.all-done { border-color: var(--green-light); background: var(--green-bg); }
+  
+  .block-header { display: flex; align-items: center; gap: 10px; padding: 13px 14px; cursor: pointer; user-select: none; }
+  .block-header:hover { background: rgba(0,0,0,0.02); }
+  .block.all-done .block-header:hover { background: rgba(0,0,0,0.03); }
+  
+  .block-icon { font-size: 17px; width: 24px; text-align: center; flex-shrink: 0; }
+  .block-title { flex: 1; font-size: 14px; font-weight: 500; }
+  .block-meta { font-size: 12px; color: var(--text3); }
+  .block.all-done .block-meta { color: var(--green); }
+  .block-chevron { font-size: 12px; color: var(--text3); transition: transform 0.2s; flex-shrink: 0; }
+  .block.open .block-chevron { transform: rotate(180deg); }
+
+  .block-body { display: none; padding: 0 14px 14px; border-top: 1px solid var(--border); }
+  .block.all-done .block-body { border-top-color: var(--green-light); }
+  .block.open .block-body { display: block; }
+
+  .ex-list { list-style: none; padding-top: 10px; display: flex; flex-direction: column; gap: 2px; }
+  .ex-item { display: flex; align-items: flex-start; gap: 10px; padding: 7px 8px; border-radius: var(--radius-sm); cursor: pointer; transition: background 0.1s; }
+  .ex-item:hover { background: var(--surface2); }
+  .ex-item.checked { opacity: 0.6; }
+  
+  .ex-cb { width: 17px; height: 17px; border: 1.5px solid var(--border2); border-radius: 4px; flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; background: var(--surface); }
+  .ex-item.checked .ex-cb { background: var(--green); border-color: var(--green); }
+  .ex-item.checked .ex-cb::after { content: '✓'; font-size: 11px; color: white; font-weight: 700; }
+  
+  .ex-info { flex: 1; }
+  .ex-label { font-size: 13px; color: var(--text); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .ex-item.checked .ex-label { text-decoration: line-through; color: var(--text2); }
+  .ex-detail { font-size: 12px; color: var(--text3); margin-top: 1px; }
+  .badge-new { font-size: 10px; background: var(--green-bg); color: var(--green); border-radius: 10px; padding: 1px 7px; font-weight: 600; white-space: nowrap; }
+
+  /* Weekly grid */
+  .section-title { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin: 28px 0 12px; }
+  .weekly-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .wday { text-align: center; }
+  .wday-label { font-size: 11px; color: var(--text3); margin-bottom: 5px; }
+  .wday-circle { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: var(--text3); transition: all 0.2s; }
+  .wday-circle.partial { background: var(--surface2); border-color: var(--border2); color: var(--text2); }
+  .wday-circle.full { background: var(--green-bg); border-color: var(--green-light); color: var(--green); }
+  .wday-circle.today { box-shadow: 0 0 0 2px var(--text); }
+
+  /* Oedema log */
+  .oedema-row { display: flex; align-items: center; gap: 10px; margin-top: 28px; padding: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+  .oedema-label { font-size: 13px; font-weight: 500; white-space: nowrap; }
+  .oedema-scale { display: flex; gap: 4px; flex: 1; }
+  .oedema-btn { flex: 1; height: 28px; border-radius: 4px; border: 1px solid var(--border); background: var(--surface2); font-size: 11px; font-weight: 600; cursor: pointer; color: var(--text2); transition: all 0.15s; }
+  .oedema-btn:hover { border-color: var(--border2); }
+  .oedema-btn.sel { background: var(--amber-bg); border-color: var(--amber); color: var(--amber); }
+
+  /* Footer note */
+  .footer-note { margin-top: 32px; padding: 12px 14px; background: var(--surface2); border-radius: var(--radius-sm); font-size: 12px; color: var(--text2); line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="header-top">
+      <h1>🦵 Реабилитация</h1>
+      <span class="badge-stage">7 месяцев</span>
+    </div>
+    <div class="header-sub">Трекер ежедневных упражнений</div>
+  </div>
+
+  <div class="week-nav">
+    <button class="week-btn" id="prevWeek">&#8249;</button>
+    <span class="week-label" id="weekLabel"></span>
+    <button class="week-btn" id="nextWeek">&#8250;</button>
+  </div>
+
+  <div class="day-tabs" id="dayTabs"></div>
+
+  <div class="progress-row">
+    <div class="progress-bar-wrap"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <span class="progress-text" id="progressText">0 / 0</span>
+  </div>
+
+  <div class="blocks" id="blocks"></div>
+
+  <div class="oedema-row" id="oedemaRow">
+    <span class="oedema-label">Отёк вечером</span>
+    <div class="oedema-scale" id="oedemaScale"></div>
+  </div>
+
+  <div class="section-title">Прогресс недели</div>
+  <div class="weekly-grid" id="weeklyGrid"></div>
+
+  <div class="footer-note">
+    💾 Данные сохраняются в браузере (localStorage). Очищаются только при сбросе браузера.
+  </div>
+
+</div>
+
+<script>
+const DAYS_SHORT = ['пн','вт','ср','чт','пт','сб','вс'];
+
+const BLOCKS = [
+  {
+    id: 'morning', icon: '🌅', title: 'Утренняя разминка', sub: '10 мин',
+    exercises: [
+      { id: 'ap', label: 'Ankle pumps', detail: '30 повторений' },
+      { id: 'circles', label: 'Круги стопой', detail: '10 по часовой + 10 против' },
+      { id: 'ktw', label: 'Knee-to-wall', detail: '2 × 10' },
+      { id: 'calf1', label: 'Растяжка икроножной (прямая нога)', detail: '2 × 30 сек' },
+      { id: 'calf2', label: 'Растяжка камбаловидной (согнутая нога)', detail: '2 × 30 сек' },
+      { id: 'pron', label: 'Супинация / пронация предплечья', detail: '2 × 15' },
+      { id: 'sup_hold', label: 'Удержание крайней супинации', detail: '3 × 20 сек' },
+    ]
+  },
+  {
+    id: 'work', icon: '💻', title: 'Микроразминки', sub: 'каждые 1–2 ч',
+    exercises: [
+      { id: 'w1', label: 'Круги стопой', detail: '10 повторений' },
+      { id: 'w2', label: 'Движения стопой вверх-вниз', detail: '10 повторений' },
+      { id: 'w3', label: 'Вращения предплечья', detail: '10 повторений' },
+    ]
+  },
+  {
+    id: 'lunch', icon: '☀️', title: 'После обеда — баланс', sub: '5 мин',
+    exercises: [
+      { id: 'bal1', label: 'Баланс на больной ноге', detail: '3 × 30 сек' },
+      { id: 'bal2', label: 'Баланс + повороты головы', detail: '2 × 20 сек' },
+      { id: 'sf', label: 'Short foot (подтягивание свода)', detail: '10 × 5 сек' },
+    ]
+  },
+  {
+    id: 'pregym', icon: '🏋️', title: 'Перед залом', sub: '10 мин',
+    exercises: [
+      { id: 'r2', label: 'Подъёмы на носки, две ноги', detail: '2 × 15' },
+      { id: 'inv', label: 'Инверсия стопы с резинкой', detail: '3 × 15' },
+      { id: 'ev', label: 'Эверсия стопы с резинкой', detail: '3 × 15', isNew: true },
+      { id: 'step', label: 'Step-up (платформа 10–15 см)', detail: '3 × 10' },
+      { id: 'bal_pre', label: 'Баланс', detail: '2 × 30 сек' },
+    ]
+  },
+  {
+    id: 'postgym', icon: '🧘', title: 'После тренировки', sub: '5–10 мин',
+    exercises: [
+      { id: 'str1', label: 'Растяжка икры (прямая нога)', detail: '3 × 30 сек' },
+      { id: 'str2', label: 'Растяжка икры (согнутая нога)', detail: '3 × 30 сек' },
+      { id: 'ktw2', label: 'Knee-to-wall', detail: '10 повторений' },
+      { id: 'ecc', label: 'Эксцентрические подъёмы на носок', detail: '3 × 10 — подъём 2 ноги, опускание больной ноги 4 сек', isNew: true },
+      { id: 'r1', label: 'Подъёмы на носки, одна нога', detail: '2 × 8' },
+      { id: 'sup2', label: 'Супинация предплечья', detail: '2 × 15' },
+    ]
+  },
+  {
+    id: 'walk', icon: '🚶', title: 'Вечерняя прогулка', sub: '15–20 мин',
+    exercises: [
+      { id: 'wfwd', label: 'Ходьба вперёд (пятка → перекат → носок)', detail: '15–20 мин, контроль хромоты' },
+      { id: 'wback', label: 'Ретроходьба (назад)', detail: '2–3 мин в конце прогулки', isNew: true },
+    ]
+  },
+  {
+    id: 'evening', icon: '🌙', title: 'Перед сном', sub: '10–15 мин',
+    exercises: [
+      { id: 'legup', label: 'Нога вверх', detail: '15–20 мин (при наличии отёка)' },
+      { id: 'ap2', label: 'Ankle pumps', detail: '50 повторений' },
+      { id: 'massage', label: 'Лимфодренажный массаж снизу вверх', detail: '3–5 мин' },
+      { id: 'sup3', label: 'Супинация предплечья', detail: '2 × 15' },
+      { id: 'sup_str', label: 'Растяжка супинации', detail: '3 × 30 сек' },
+    ]
+  },
+];
+
+const TOTAL_EX = BLOCKS.reduce((a, b) => a + b.exercises.length, 0);
+
+// Storage helpers
+function storeKey(weekStart, dayOffset) {
+  const d = new Date(weekStart);
+  d.setDate(d.getDate() + dayOffset);
+  return 'rehab_' + d.toISOString().slice(0, 10);
+}
+function loadDay(key) {
+  try { return JSON.parse(localStorage.getItem(key) || '{}'); } catch { return {}; }
+}
+function saveDay(key, data) {
+  try { localStorage.setItem(key, JSON.stringify(data)); } catch {}
+}
+function loadOedema(key) {
+  try { return localStorage.getItem('oedema_' + key) || ''; } catch { return ''; }
+}
+function saveOedema(key, val) {
+  try { localStorage.setItem('oedema_' + key, val); } catch {}
+}
+
+// State
+let weekStart = getWeekStart(new Date());
+let selectedDay = todayOffset();
+
+function getWeekStart(d) {
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  const mon = new Date(d);
+  mon.setDate(d.getDate() + diff);
+  mon.setHours(0, 0, 0, 0);
+  return mon;
+}
+function todayOffset() {
+  const now = new Date();
+  const ws = getWeekStart(now);
+  const diff = Math.round((now - ws) / 86400000);
+  return Math.min(Math.max(diff, 0), 6);
+}
+function isCurrentWeek() {
+  const now = getWeekStart(new Date());
+  return now.getTime() === weekStart.getTime();
+}
+
+// Render week label
+function renderWeekLabel() {
+  const end = new Date(weekStart);
+  end.setDate(weekStart.getDate() + 6);
+  const fmt = d => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+  document.getElementById('weekLabel').textContent = fmt(weekStart) + ' – ' + fmt(end);
+}
+
+// Render day tabs
+function renderDayTabs() {
+  const container = document.getElementById('dayTabs');
+  container.innerHTML = '';
+  const todayOff = isCurrentWeek() ? todayOffset() : -1;
+  for (let i = 0; i < 7; i++) {
+    const key = storeKey(weekStart, i);
+    const data = loadDay(key);
+    const done = Object.values(data).filter(Boolean).length;
+    const btn = document.createElement('button');
+    btn.className = 'day-tab' + (i === selectedDay ? ' active' : '') + (done > 0 ? ' has-done' : '');
+    btn.innerHTML = DAYS_SHORT[i] + '<span class="dot"></span>';
+    if (i === todayOff) btn.style.fontWeight = '700';
+    btn.onclick = () => { selectedDay = i; renderAll(); };
+    container.appendChild(btn);
+  }
+}
+
+// Render blocks
+function renderBlocks() {
+  const key = storeKey(weekStart, selectedDay);
+  const data = loadDay(key);
+  const container = document.getElementById('blocks');
+  container.innerHTML = '';
+
+  let totalDone = 0;
+  BLOCKS.forEach(block => {
+    const blockDone = block.exercises.filter(e => data[e.id]).length;
+    totalDone += blockDone;
+    const allDone = blockDone === block.exercises.length;
+
+    const div = document.createElement('div');
+    div.className = 'block' + (allDone ? ' all-done' : '');
+
+    const header = document.createElement('div');
+    header.className = 'block-header';
+    header.innerHTML = `
+      <span class="block-icon">${block.icon}</span>
+      <span class="block-title">${block.title}</span>
+      <span class="block-meta">${allDone ? '✓ готово' : blockDone + '/' + block.exercises.length + ' · ' + block.sub}</span>
+      <span class="block-chevron">▾</span>
+    `;
+    header.onclick = () => { div.classList.toggle('open'); };
+    div.appendChild(header);
+
+    const body = document.createElement('div');
+    body.className = 'block-body';
+    const ul = document.createElement('ul');
+    ul.className = 'ex-list';
+
+    block.exercises.forEach(ex => {
+      const checked = !!data[ex.id];
+      const li = document.createElement('li');
+      li.className = 'ex-item' + (checked ? ' checked' : '');
+      li.innerHTML = `
+        <div class="ex-cb"></div>
+        <div class="ex-info">
+          <div class="ex-label">${ex.label}${ex.isNew ? '<span class="badge-new">новое</span>' : ''}</div>
+          <div class="ex-detail">${ex.detail}</div>
+        </div>
+      `;
+      li.onclick = () => {
+        data[ex.id] = !data[ex.id];
+        saveDay(key, data);
+        renderAll();
+      };
+      ul.appendChild(li);
+    });
+
+    body.appendChild(ul);
+    div.appendChild(body);
+    container.appendChild(div);
+  });
+
+  const pct = Math.round(totalDone / TOTAL_EX * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = totalDone + ' / ' + TOTAL_EX;
+}
+
+// Render oedema
+function renderOedema() {
+  const key = storeKey(weekStart, selectedDay);
+  const cur = loadOedema(key);
+  const scale = document.getElementById('oedemaScale');
+  scale.innerHTML = '';
+  for (let i = 0; i <= 10; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'oedema-btn' + (String(i) === cur ? ' sel' : '');
+    btn.textContent = i;
+    btn.onclick = () => { saveOedema(key, String(i)); renderOedema(); };
+    scale.appendChild(btn);
+  }
+}
+
+// Weekly grid
+function renderWeeklyGrid() {
+  const grid = document.getElementById('weeklyGrid');
+  grid.innerHTML = '';
+  const todayOff = isCurrentWeek() ? todayOffset() : -1;
+  for (let i = 0; i < 7; i++) {
+    const key = storeKey(weekStart, i);
+    const data = loadDay(key);
+    const done = Object.values(data).filter(Boolean).length;
+    const pct = done > 0 ? Math.round(done / TOTAL_EX * 100) : 0;
+    const circleClass = done === 0 ? '' : done >= TOTAL_EX ? 'full' : 'partial';
+    const todayClass = i === todayOff ? ' today' : '';
+    const cell = document.createElement('div');
+    cell.className = 'wday';
+    cell.innerHTML = `
+      <div class="wday-label">${DAYS_SHORT[i]}</div>
+      <div class="wday-circle ${circleClass}${todayClass}">${pct > 0 ? pct + '%' : ''}</div>
+    `;
+    grid.appendChild(cell);
+  }
+}
+
+function renderAll() {
+  renderWeekLabel();
+  renderDayTabs();
+  renderBlocks();
+  renderOedema();
+  renderWeeklyGrid();
+}
+
+document.getElementById('prevWeek').onclick = () => {
+  weekStart.setDate(weekStart.getDate() - 7);
+  renderAll();
+};
+document.getElementById('nextWeek').onclick = () => {
+  weekStart.setDate(weekStart.getDate() + 7);
+  renderAll();
+};
+
+renderAll();
+</script>
+</body>
+</html>
