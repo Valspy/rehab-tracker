@@ -160,6 +160,7 @@
 var DAYS_SHORT = ['пн','вт','ср','чт','пт','сб','вс'];
 // 0=пн,1=вт,2=ср,3=чт,4=пт,5=сб,6=вс
 var GYM_DAYS = [0, 2, 4]; // пн, ср, пт
+var GYM_TIMES = { 0: '9:00', 2: '10:00', 4: '9:00' }; // пн, ср, пт
 
 var MICRO_EXERCISES = [
   { id: 'm1', label: 'Круги стопой — 10 повторений' },
@@ -188,14 +189,6 @@ var BLOCKS_COMMON = [
   },
   {
     id: 'micro', icon: '💻', title: 'Микроразминки', sub: '4 сессии в день', isMicro: true
-  },
-  {
-    id: 'lunch', icon: '☀️', title: 'После обеда — баланс', sub: '5 мин',
-    exercises: [
-      { id: 'bal1', label: 'Баланс на больной ноге', detail: '3 × 30 сек' },
-      { id: 'bal2', label: 'Баланс с поворотами головы', detail: '2 × 20 сек' },
-      { id: 'sf', label: 'Короткая стопа (подтягивание свода)', detail: '10 × 5 сек' }
-    ]
   }
 ];
 
@@ -225,6 +218,14 @@ var BLOCKS_GYM = [
 
 var BLOCKS_REST = [
   {
+    id: 'lunch', icon: '☀️', title: 'После обеда — баланс', sub: '5 мин',
+    exercises: [
+      { id: 'bal1', label: 'Баланс на больной ноге', detail: '3 × 30 сек' },
+      { id: 'bal2', label: 'Баланс с поворотами головы', detail: '2 × 20 сек' },
+      { id: 'sf', label: 'Короткая стопа (подтягивание свода)', detail: '10 × 5 сек' }
+    ]
+  },
+  {
     id: 'recovery', icon: '🔄', title: 'Активное восстановление', sub: '15 мин',
     exercises: [
       { id: 'rec_bal1', label: 'Баланс на одной ноге', detail: '3 × 45 сек' },
@@ -233,7 +234,8 @@ var BLOCKS_REST = [
       { id: 'rec_ecc', label: 'Эксцентрические подъёмы на носок', detail: '3 × 10 — подъём двумя, опускание больной ногой 4 сек' },
       { id: 'rec_inv', label: 'Инверсия стопы с резинкой', detail: '3 × 15' },
       { id: 'rec_ev', label: 'Эверсия стопы с резинкой', detail: '3 × 15' },
-      { id: 'rec_ktw', label: 'Колено к стене', detail: '2 × 10' }
+      { id: 'rec_ktw', label: 'Колено к стене', detail: '2 × 10' },
+      { id: 'rec_calf_raise', label: 'Подъём на носках', detail: '3 × 15' }
     ]
   }
 ];
@@ -365,7 +367,7 @@ function renderBlocks() {
 
   var isGym = GYM_DAYS.indexOf(selectedDay) !== -1;
   var sub = document.getElementById('daySubtitle');
-  sub.textContent = isGym ? '🏋️ День тренировки' : '🔄 День восстановления';
+  sub.textContent = isGym ? '🏋️ День тренировки — ' + GYM_TIMES[selectedDay] : '🔄 День восстановления';
 
   var totalDone = 0, totalAll = 0;
 
